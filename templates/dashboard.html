@@ -1,1 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
 
+<h1>Your QR Codes</h1>
+
+<a href="/create">Create QR</a>
+<a href="/logout">Logout</a>
+
+<hr>
+
+{% for qr in qrs %}
+
+<h3>{{ qr.name }}</h3>
+
+<img src="{{ url_for('static', filename='qrcodes/' + qr.file) }}" width="200">
+
+<p>{{ qr.data }}</p>
+
+<a href="/delete/{{ qr.id }}">Delete</a>
+
+<hr>
+
+{% endfor %}
+
+</body>
+</html>
