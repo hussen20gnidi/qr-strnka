@@ -1,5 +1,5 @@
 flask
-qrcode[pil]
+qrcode
 pillow
 werkzeug
 gunicorn
