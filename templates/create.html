@@ -1,21 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create QR</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h1>Create QR</h1>
+{% block content %}
+<div class="card form-card">
+    <h1>Vytvořit QR kód</h1>
 
-<form method="POST">
-    <input name="name" placeholder="QR name">
-    <br><br>
-    <input name="data" placeholder="QR data">
-    <br><br>
-    <button>Create</button>
-</form>
+    <form method="POST">
+        <label>Název QR kódu</label>
+        <input name="name" placeholder="Např. Instagram" required>
 
-<a href="/dashboard">Back</a>
+        <label>Obsah QR kódu</label>
+        <input name="data" placeholder="Text nebo odkaz" required>
 
-</body>
-</html>
+        <button class="btn" type="submit">Vytvořit</button>
+    </form>
+
+    <a href="/dashboard">Zpět</a>
+</div>
+{% endblock %}
