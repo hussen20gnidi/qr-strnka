@@ -1,22 +1,27 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 import sqlite3
 import os
 import qrcode
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secret123"
 
-# Render-safe storage
-DB = "/tmp/database.db"
-QR_FOLDER = "/tmp/qrcodes"
+# ✅ stabilní cesta (funguje lokálně i na Renderu)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB = os.path.join(BASE_DIR, "database.db")
+QR_FOLDER = os.path.join(BASE_DIR, "static", "qrcodes")
 
 os.makedirs(QR_FOLDER, exist_ok=True)
 
+
+# ---------------- DB ----------------
 def get_db():
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     conn = get_db()
@@ -42,12 +47,15 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 def current_user():
     return session.get("user_id")
 
 
+# ---------------- ROUTES ----------------
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -55,18 +63,16 @@ def index():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
-
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if not username or len(username) < 3:
-            flash("Username too short")
+        if not username or not password:
+            flash("Vyplň vše")
             return redirect("/register")
 
-        if not password or len(password) < 3:
-            flash("Password too short")
+        if len(username) < 3 or len(password) < 3:
+            flash("Příliš krátké")
             return redirect("/register")
 
         conn = get_db()
@@ -77,9 +83,8 @@ def register():
                 (username, generate_password_hash(password))
             )
             conn.commit()
-
         except:
-            flash("User already exists")
+            flash("User existuje")
             return redirect("/register")
 
         return redirect("/login")
@@ -89,7 +94,6 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
 
         username = request.form.get("username")
@@ -103,15 +107,14 @@ def login():
         ).fetchone()
 
         if not user:
-            flash("Wrong username")
+            flash("Špatný login")
             return redirect("/login")
 
         if not check_password_hash(user["password"], password):
-            flash("Wrong password")
+            flash("Špatné heslo")
             return redirect("/login")
 
         session["user_id"] = user["id"]
-
         return redirect("/dashboard")
 
     return render_template("login.html")
@@ -125,7 +128,6 @@ def logout():
 
 @app.route("/dashboard")
 def dashboard():
-
     if not current_user():
         return redirect("/login")
 
@@ -139,9 +141,9 @@ def dashboard():
     return render_template("dashboard.html", qrs=qrs)
 
 
+# ---------------- CREATE QR ----------------
 @app.route("/create", methods=["GET", "POST"])
 def create():
-
     if not current_user():
         return redirect("/login")
 
@@ -151,23 +153,23 @@ def create():
         data = request.form.get("data")
 
         if not name or not data:
-            flash("Fill everything")
+            flash("Vyplň vše")
             return redirect("/create")
 
-        filename = f"{current_user()}_{name}.png".replace(" ", "_")
-
+        # bezpečný název souboru
+        safe_name = secure_filename(name)
+        filename = f"{current_user()}_{safe_name}.png"
         path = os.path.join(QR_FOLDER, filename)
 
+        # ✅ správná generace QR
         img = qrcode.make(data)
         img.save(path)
 
         conn = get_db()
-
         conn.execute(
             "INSERT INTO qrcodes (user_id, name, data, file) VALUES (?, ?, ?, ?)",
             (current_user(), name, data, filename)
         )
-
         conn.commit()
 
         return redirect("/dashboard")
@@ -175,9 +177,9 @@ def create():
     return render_template("create.html")
 
 
+# ---------------- DELETE QR ----------------
 @app.route("/delete/<int:id>")
 def delete(id):
-
     if not current_user():
         return redirect("/login")
 
@@ -200,15 +202,13 @@ def delete(id):
     return redirect("/dashboard")
 
 
-# ✅ DELETE ACCOUNT (úkol ze zadání)
+# ---------------- DELETE ACCOUNT ----------------
 @app.route("/delete_account")
 def delete_account():
-
     if not current_user():
         return redirect("/login")
 
     user_id = current_user()
-
     conn = get_db()
 
     qrs = conn.execute(
@@ -224,10 +224,9 @@ def delete_account():
 
     conn.execute("DELETE FROM qrcodes WHERE user_id=?", (user_id,))
     conn.execute("DELETE FROM users WHERE id=?", (user_id,))
-
     conn.commit()
-    session.clear()
 
+    session.clear()
     return redirect("/")
 
 
