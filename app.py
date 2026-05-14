@@ -4,11 +4,12 @@ import os
 import qrcode
 from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secret123"
 
-DB = "database.db"
-QR_FOLDER = "static/qrcodes"
+# ✅ Render-safe storage
+DB = "/tmp/database.db"
+QR_FOLDER = "/tmp/qrcodes"
 
 os.makedirs(QR_FOLDER, exist_ok=True)
 
@@ -20,8 +21,23 @@ def get_db():
 def init_db():
     conn = get_db()
 
-    conn.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT)")
-    conn.execute("CREATE TABLE IF NOT EXISTS qrcodes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, data TEXT, file TEXT)")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS qrcodes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            name TEXT,
+            data TEXT,
+            file TEXT
+        )
+    """)
 
     conn.commit()
     conn.close()
@@ -31,11 +47,13 @@ init_db()
 def current_user():
     return session.get("user_id")
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/register", methods=["GET","POST"])
+
+@app.route("/register", methods=["GET", "POST"])
 def register():
 
     if request.method == "POST":
@@ -43,11 +61,11 @@ def register():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if len(username) < 3:
+        if not username or len(username) < 3:
             flash("Username too short")
             return redirect("/register")
 
-        if len(password) < 3:
+        if not password or len(password) < 3:
             flash("Password too short")
             return redirect("/register")
 
@@ -55,7 +73,7 @@ def register():
 
         try:
             conn.execute(
-                "INSERT INTO users (username,password) VALUES (?,?)",
+                "INSERT INTO users (username, password) VALUES (?, ?)",
                 (username, generate_password_hash(password))
             )
             conn.commit()
@@ -68,7 +86,8 @@ def register():
 
     return render_template("register.html")
 
-@app.route("/login", methods=["GET","POST"])
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
@@ -97,10 +116,12 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
 
 @app.route("/dashboard")
 def dashboard():
@@ -117,7 +138,8 @@ def dashboard():
 
     return render_template("dashboard.html", qrs=qrs)
 
-@app.route("/create", methods=["GET","POST"])
+
+@app.route("/create", methods=["GET", "POST"])
 def create():
 
     if not current_user():
@@ -142,7 +164,7 @@ def create():
         conn = get_db()
 
         conn.execute(
-            "INSERT INTO qrcodes (user_id,name,data,file) VALUES (?,?,?,?)",
+            "INSERT INTO qrcodes (user_id, name, data, file) VALUES (?, ?, ?, ?)",
             (current_user(), name, data, filename)
         )
 
@@ -151,6 +173,7 @@ def create():
         return redirect("/dashboard")
 
     return render_template("create.html")
+
 
 @app.route("/delete/<int:id>")
 def delete(id):
@@ -166,7 +189,6 @@ def delete(id):
     ).fetchone()
 
     if qr:
-
         try:
             os.remove(os.path.join(QR_FOLDER, qr["file"]))
         except:
@@ -176,6 +198,7 @@ def delete(id):
         conn.commit()
 
     return redirect("/dashboard")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
