@@ -1,25 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h1>Your QR Codes</h1>
+{% block content %}
+<div class="top">
+    <div>
+        <h1>Moje QR kódy</h1>
+        <p>Přihlášený uživatel: {{ session.get("username") }}</p>
+    </div>
 
-<a href="/create">Create QR</a> |
-<a href="/logout">Logout</a> |
-<a href="/delete_account" onclick="return confirm('Delete account?')">Delete account</a>
+    <a class="btn" href="/create">+ Vytvořit QR</a>
+</div>
 
-<hr>
+{% if qrs %}
+    <div class="grid">
+        {% for qr in qrs %}
+            <div class="card qr-card">
+                <h2>{{ qr.name }}</h2>
 
-{% for qr in qrs %}
-    <h3>{{ qr.name }}</h3>
-    <img src="{{ url_for('static', filename='qrcodes/' + qr.file) }}" width="200">
-    <p>{{ qr.data }}</p>
-    <a href="/delete/{{ qr.id }}">Delete</a>
-    <hr>
-{% endfor %}
+                <img class="qr-img" src="{{ url_for('qr_image', filename=qr.file) }}" alt="QR kód">
 
-</body>
-</html>
+                <p>{{ qr.data }}</p>
+
+                <div class="actions">
+                    <a class="btn small" href="{{ url_for('qr_image', filename=qr.file) }}" download>Stáhnout</a>
+                    <a class="btn danger small" href="/delete/{{ qr.id }}" onclick="return confirm('Opravdu smazat QR kód?')">Smazat</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card">
+        <p>Zatím nemáš žádný QR kód.</p>
+        <a class="btn" href="/create">Vytvořit první QR</a>
+    </div>
+{% endif %}
+
+<div class="delete-account">
+    <a href="/delete_account" onclick="return confirm('Opravdu chceš smazat účet i všechna data?')">
+        Smazat účet
+    </a>
+</div>
+{% endblock %}
