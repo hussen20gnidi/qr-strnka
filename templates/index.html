@@ -1,14 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>QR App</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h1>QR Generator App</h1>
-
-<a href="/login">Login</a> |
-<a href="/register">Register</a>
-
-</body>
-</html>
+{% block content %}
+<div class="hero">
+    <h1>Generátor QR kódů</h1>
+    <p>Vytvářej, ukládej a spravuj svoje QR kódy online.</p>
+    <a class="btn" href="/register">Začít</a>
+    <a class="btn secondary" href="/login">Přihlásit se</a>
+</div>
+{% endblock %}
