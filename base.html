@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>QR App</title>
+<style>
+body{font-family:Arial;background:#f2f2f2;padding:30px;}
+.box{background:white;padding:20px;border-radius:10px;margin-bottom:20px;}
+input{width:100%;padding:10px;margin-top:10px;}
+button{padding:10px 20px;margin-top:10px;}
+img{width:220px;}
+a{margin-right:10px;}
+</style>
+</head>
+<body>
+
+<a href="/">Home</a>
+
+{% if session.get("user_id") %}
+<a href="/dashboard">Dashboard</a>
+<a href="/create">Create QR</a>
+<a href="/logout">Logout</a>
+{% else %}
+<a href="/login">Login</a>
+<a href="/register">Register</a>
+{% endif %}
+
+{% with messages = get_flashed_messages() %}
+{% for msg in messages %}
+<div class="box">{{ msg }}</div>
+{% endfor %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+</body>
+</html>
