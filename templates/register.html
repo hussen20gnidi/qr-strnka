@@ -1,21 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h1>Register</h1>
+{% block content %}
+<div class="card form-card">
+    <h1>Registrace</h1>
 
-<form method="POST">
-    <input name="username" placeholder="Username">
-    <br><br>
-    <input type="password" name="password" placeholder="Password">
-    <br><br>
-    <button>Register</button>
-</form>
+    <form method="POST">
+        <label>Uživatelské jméno</label>
+        <input name="username" required>
 
-<a href="/login">Login</a>
+        <label>Heslo</label>
+        <input type="password" name="password" required>
 
-</body>
-</html>
+        <button class="btn" type="submit">Registrovat</button>
+    </form>
+
+    <p>Už máš účet? <a href="/login">Přihlášení</a></p>
+</div>
+{% endblock %}
