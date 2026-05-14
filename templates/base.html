@@ -1,12 +1,37 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 <head>
-    <title>QR App</title>
+    <meta charset="UTF-8">
+    <title>QR Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-{% block content %}{% endblock %}
+<nav>
+    <div class="logo">QR Generator</div>
+    <div>
+        {% if session.get("user_id") %}
+            <a href="/dashboard">Dashboard</a>
+            <a href="/create">Vytvořit QR</a>
+            <a href="/logout">Odhlásit</a>
+        {% else %}
+            <a href="/login">Přihlášení</a>
+            <a href="/register">Registrace</a>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
 
 </body>
 </html>
