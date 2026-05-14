@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secret123"
 
-# ✅ Render-safe storage
+# Render-safe storage
 DB = "/tmp/database.db"
 QR_FOLDER = "/tmp/qrcodes"
 
@@ -198,6 +198,37 @@ def delete(id):
         conn.commit()
 
     return redirect("/dashboard")
+
+
+# ✅ DELETE ACCOUNT (úkol ze zadání)
+@app.route("/delete_account")
+def delete_account():
+
+    if not current_user():
+        return redirect("/login")
+
+    user_id = current_user()
+
+    conn = get_db()
+
+    qrs = conn.execute(
+        "SELECT * FROM qrcodes WHERE user_id=?",
+        (user_id,)
+    ).fetchall()
+
+    for qr in qrs:
+        try:
+            os.remove(os.path.join(QR_FOLDER, qr["file"]))
+        except:
+            pass
+
+    conn.execute("DELETE FROM qrcodes WHERE user_id=?", (user_id,))
+    conn.execute("DELETE FROM users WHERE id=?", (user_id,))
+
+    conn.commit()
+    session.clear()
+
+    return redirect("/")
 
 
 if __name__ == "__main__":
